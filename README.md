@@ -58,4 +58,4 @@ npm run dev
 ## Dokumentacja projektu
 
 Szczegółowy opis założeń oraz wybór tematu znajduje się tutaj:
-[Dokumentacja - Wybór Tematu](./docs/topic-selection.md)
+[Dokumentacja - Wybór Tematu](./docs/topic_selection.md)
