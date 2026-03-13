@@ -1,0 +1,3 @@
+# PROJEKT TAW NORBERT JAC SEBASTIAN IWANOWSKI
+
+## TEMAT: Inteligentny Planer Podróży z Al
