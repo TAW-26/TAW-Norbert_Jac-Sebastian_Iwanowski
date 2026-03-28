@@ -97,6 +97,57 @@ app.get('/api/users/me', authenticateToken, (req, res) => {
   });
 });
 
+const tripService = {
+  async createTrip(userId: number, destination: string, startDate: string, endDate: string) {
+    if (new Date(startDate) > new Date(endDate)) {
+      throw new Error("Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.");
+    }
+
+    return await prisma.trip.create({
+      data: {
+        destination,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        userId
+      }
+    });
+  },
+
+  async getUserTrips(userId: number) {
+    return await prisma.trip.findMany({
+      where: { userId },
+      orderBy: { startDate: 'asc' }
+    });
+  },
+
+  async updateTrip(tripId: number, userId: number, data: { destination?: string, startDate?: string, endDate?: string }) {
+    const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+
+    if (!trip || trip.userId !== userId) {
+      throw new Error("Nie znaleziono wycieczki lub brak uprawnień.");
+    }
+
+    return await prisma.trip.update({
+      where: { id: tripId },
+      data: {
+        destination: data.destination || trip.destination,
+        startDate: data.startDate ? new Date(data.startDate) : trip.startDate,
+        endDate: data.endDate ? new Date(data.endDate) : trip.endDate
+      }
+    });
+  },
+
+  async deleteTrip(tripId: number, userId: number) {
+    const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+
+    if (!trip || trip.userId !== userId) {
+      throw new Error("Nie znaleziono wycieczki lub brak uprawnień.");
+    }
+
+    return await prisma.trip.delete({ where: { id: tripId } });
+  }
+};
+
 app.post('/api/trips', authenticateToken, async (req, res) => {
   try {
     const { destination, startDate, endDate } = req.body;
@@ -106,34 +157,19 @@ app.post('/api/trips', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: "Brak wymaganych danych (destination, startDate, endDate)." });
     }
 
-    const newTrip = await prisma.trip.create({
-      data: {
-        destination,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        userId
-      }
-    });
-
+    const newTrip = await tripService.createTrip(userId, destination, startDate, endDate);
     res.status(201).json(newTrip);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Wystąpił błąd podczas dodawania wycieczki." });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 });
 
 app.get('/api/trips', authenticateToken, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
-
-    const trips = await prisma.trip.findMany({
-      where: { userId },
-      orderBy: { startDate: 'asc' }
-    });
-
+    const trips = await tripService.getUserTrips(userId);
     res.status(200).json(trips);
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
     res.status(500).json({ error: "Wystąpił błąd podczas pobierania wycieczek." });
   }
 });
@@ -144,24 +180,10 @@ app.put('/api/trips/:id', authenticateToken, async (req, res) => {
     const userId = (req as any).user.userId;
     const { destination, startDate, endDate } = req.body;
 
-    const trip = await prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip || trip.userId !== userId) {
-      return res.status(404).json({ error: "Nie znaleziono wycieczki lub brak uprawnień." });
-    }
-
-    const updatedTrip = await prisma.trip.update({
-      where: { id: tripId },
-      data: {
-        destination: destination || trip.destination,
-        startDate: startDate ? new Date(startDate) : trip.startDate,
-        endDate: endDate ? new Date(endDate) : trip.endDate
-      }
-    });
-
+    const updatedTrip = await tripService.updateTrip(tripId, userId, { destination, startDate, endDate });
     res.status(200).json(updatedTrip);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Wystąpił błąd podczas aktualizacji wycieczki." });
+  } catch (error: any) {
+    res.status(404).json({ error: error.message });
   }
 });
 
@@ -170,16 +192,10 @@ app.delete('/api/trips/:id', authenticateToken, async (req, res) => {
     const tripId = parseInt(req.params.id as string);
     const userId = (req as any).user.userId;
 
-    const trip = await prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip || trip.userId !== userId) {
-      return res.status(404).json({ error: "Nie znaleziono wycieczki lub brak uprawnień." });
-    }
-
-    await prisma.trip.delete({ where: { id: tripId } });
+    await tripService.deleteTrip(tripId, userId);
     res.status(200).json({ message: "Wycieczka została pomyślnie usunięta." });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Wystąpił błąd podczas usuwania wycieczki." });
+  } catch (error: any) {
+    res.status(404).json({ error: error.message });
   }
 });
 
