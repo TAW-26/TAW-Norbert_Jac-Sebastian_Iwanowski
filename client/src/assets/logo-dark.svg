@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="600mm"
+   height="150mm"
+   viewBox="0 0 600 150"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   sodipodi:docname="logo-dark1.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.51981271"
+     inkscape:cx="1223.5176"
+     inkscape:cy="81.760217"
+     inkscape:window-width="2560"
+     inkscape:window-height="1369"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Warstwa 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#247ced;fill-opacity:1;stroke-width:2.2823"
+       d="M 28.416978,110.11179 28.557996,71.27797 104.192,43.424732 46.271645,75.964739 l -1.8277,21.023897 z"
+       id="path1-3-3" />
+    <path
+       style="fill:#eb4832;fill-opacity:1;stroke-width:2.37751"
+       d="M 53.229442,88.799325 V 78.761974 L 112.36331,39.712287 26.485494,64.599601 0.63298953,51.537201 130.34111,32.012311 79.824764,90.586796 60.806923,81.099442 Z"
+       id="path2-4-1" />
+    <path
+       style="fill:#247ced;fill-opacity:1;stroke-width:2.37751"
+       d="m 46.248411,75.940963 -0.104868,19.688423 -2.521331,1.9445 z"
+       id="path3-1-9" />
+    <path
+       style="fill:#247ced;fill-opacity:1;stroke-width:2.38395"
+       d="m 46.132874,95.533746 0.0271,1.33267 -17.735156,18.598664 v -8.4908 z"
+       id="path4-1-8" />
+    <path
+       style="fill:#eb4832;fill-opacity:1;stroke-width:2.2823"
+       d="M 28.416978,110.11179 28.557996,71.27797 104.192,43.424732 46.271645,75.964739 l -1.8277,21.023897 z"
+       id="path5-3-6" />
+    <path
+       style="fill:#eb4832;fill-opacity:1;stroke-width:2.37751"
+       d="M 53.229442,88.799325 V 78.761974 L 112.36331,39.712287 26.485494,64.599601 0.63298953,51.537201 130.34111,32.012311 79.824764,90.586796 60.806923,81.099442 Z"
+       id="path6-8-5" />
+    <path
+       style="fill:#eb4832;fill-opacity:1;stroke-width:2.37751"
+       d="m 46.248411,75.940963 -0.104868,19.688423 -2.521331,1.9445 z"
+       id="path7-7-0" />
+    <path
+       style="fill:#eb4832;fill-opacity:1;stroke-width:2.38395"
+       d="m 46.132874,95.533746 0.0271,1.33267 -17.735156,18.598664 v -8.4908 z"
+       id="path8-4-2" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:70.1602px;line-height:0;font-family:sans-serif;-inkscape-font-specification:sans-serif;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;fill:#eb4832;fill-opacity:1;stroke-width:2.39182"
+       x="129.71405"
+       y="100.49715"
+       id="text17-8"><tspan
+         sodipodi:role="line"
+         id="tspan17-6"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:70.1602px;font-family:Bahnschrift;-inkscape-font-specification:Bahnschrift;fill:#eb4832;fill-opacity:1;stroke-width:2.39182"
+         x="129.71405"
+         y="100.49715">Travel-Planner</tspan></text>
+  </g>
+</svg>
