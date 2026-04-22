@@ -13,9 +13,13 @@ import MyTrips from './pages/MyTrips';
 import WorldMap from './pages/WorldMap';
 import Profile from './pages/Profile';
 
+import { useAuth } from './context/AuthContext';
+
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  const { user, logout } = useAuth();
 
   const closeMenu = () => setIsMobileMenuOpen(false);
 
@@ -38,6 +42,13 @@ function App() {
     }
     metaThemeColor.setAttribute('content', isDarkMode ? '#0a0a0a' : '#f3f4f6');
   }, [isDarkMode]);
+
+  const getUserNickname = () => {
+    if (!user) return '';
+    if (user.nickname) return user.nickname;
+    if (user.email) return user.email.split('@')[0];
+    return '';
+  };
 
   return (
     <Router>
@@ -70,11 +81,13 @@ function App() {
               <img src={logoDark} alt="Logo" className="h-10 sm:h-12 lg:h-12 xl:h-16 2xl:h-24 w-auto hidden dark:block transition-all duration-300" />
             </Link>
 
-            <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 space-x-2 xl:space-x-4 2xl:space-x-8 w-auto">
-              <Link to="/plan" className={`whitespace-nowrap text-xs lg:text-base xl:text-lg 2xl:text-2xl px-3 lg:px-5 xl:px-7 2xl:px-10 py-2 lg:py-3 xl:py-3.5 2xl:py-5 rounded-lg lg:rounded-xl 2xl:rounded-2xl shadow-sm dark:shadow-white/10 hover:scale-105 transition-all duration-300 ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/20 hover:text-orange-400' : 'bg-white/50 text-black hover:bg-white hover:text-blue-600'}`}>Zaplanuj podróż</Link>
-              <Link to="/trips" className={`whitespace-nowrap text-xs lg:text-base xl:text-lg 2xl:text-2xl px-3 lg:px-5 xl:px-7 2xl:px-10 py-2 lg:py-3 xl:py-3.5 2xl:py-5 rounded-lg lg:rounded-xl 2xl:rounded-2xl shadow-sm dark:shadow-white/10 hover:scale-105 transition-all duration-300 ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/20 hover:text-orange-400' : 'bg-white/50 text-black hover:bg-white hover:text-blue-600'}`}>Moje podróże</Link>
-              <Link to="/map" className={`whitespace-nowrap text-xs lg:text-base xl:text-lg 2xl:text-2xl px-3 lg:px-5 xl:px-7 2xl:px-10 py-2 lg:py-3 xl:py-3.5 2xl:py-5 rounded-lg lg:rounded-xl 2xl:rounded-2xl shadow-sm dark:shadow-white/10 hover:scale-105 transition-all duration-300 ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/20 hover:text-orange-400' : 'bg-white/50 text-black hover:bg-white hover:text-blue-600'}`}>Mapa świata</Link>
-            </div>
+            {user && (
+              <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 space-x-2 xl:space-x-4 2xl:space-x-8 w-auto">
+                <Link to="/plan" className={`whitespace-nowrap text-xs lg:text-base xl:text-lg 2xl:text-2xl px-3 lg:px-5 xl:px-7 2xl:px-10 py-2 lg:py-3 xl:py-3.5 2xl:py-5 rounded-lg lg:rounded-xl 2xl:rounded-2xl shadow-sm dark:shadow-white/10 hover:scale-105 transition-all duration-300 ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/20 hover:text-orange-400' : 'bg-white/50 text-black hover:bg-white hover:text-blue-600'}`}>Zaplanuj podróż</Link>
+                <Link to="/trips" className={`whitespace-nowrap text-xs lg:text-base xl:text-lg 2xl:text-2xl px-3 lg:px-5 xl:px-7 2xl:px-10 py-2 lg:py-3 xl:py-3.5 2xl:py-5 rounded-lg lg:rounded-xl 2xl:rounded-2xl shadow-sm dark:shadow-white/10 hover:scale-105 transition-all duration-300 ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/20 hover:text-orange-400' : 'bg-white/50 text-black hover:bg-white hover:text-blue-600'}`}>Moje podróże</Link>
+                <Link to="/map" className={`whitespace-nowrap text-xs lg:text-base xl:text-lg 2xl:text-2xl px-3 lg:px-5 xl:px-7 2xl:px-10 py-2 lg:py-3 xl:py-3.5 2xl:py-5 rounded-lg lg:rounded-xl 2xl:rounded-2xl shadow-sm dark:shadow-white/10 hover:scale-105 transition-all duration-300 ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/20 hover:text-orange-400' : 'bg-white/50 text-black hover:bg-white hover:text-blue-600'}`}>Mapa świata</Link>
+              </div>
+            )}
 
             <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-3 xl:space-x-5 2xl:space-x-8 relative z-10 shrink-0">
               <button
@@ -85,13 +98,31 @@ function App() {
               </button>
 
               <div className={`hidden lg:flex items-center space-x-2 lg:space-x-3 xl:space-x-4 2xl:space-x-6 px-2 lg:px-4 xl:px-5 2xl:px-8 py-1.5 lg:py-2 xl:py-2.5 2xl:py-4 rounded-full shadow-sm dark:shadow-white/10 hover:shadow-md transition-all duration-300 ${isDarkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-white/50 hover:bg-white'}`}>
-                <div className="flex flex-col items-end">
-                  <Link to="/profile" className={`whitespace-nowrap text-xs sm:text-sm lg:text-sm xl:text-xl 2xl:text-2xl leading-tight transition-colors ${isDarkMode ? 'text-white hover:text-orange-400' : 'text-black hover:text-blue-600'}`}>Hi User!</Link>
-                  <Link to="/login" className="whitespace-nowrap text-[8px] sm:text-[10px] lg:text-[10px] xl:text-xs 2xl:text-base uppercase font-sans font-bold bg-red-600 hover:bg-red-700 text-white px-1.5 lg:px-2.5 xl:px-4 2xl:px-6 py-0.5 lg:py-1 xl:py-1.5 2xl:py-2 rounded lg:rounded-md transition-all duration-300 mt-0.5 lg:mt-1 shadow-sm">Wyloguj</Link>
-                </div>
-                <Link to="/profile" className={`p-1 sm:p-1.5 lg:p-2 xl:p-2.5 2xl:p-4 rounded-full hover:scale-110 transition-all duration-300 shadow-md flex justify-center items-center ${isDarkMode ? 'bg-white text-black hover:bg-orange-400 hover:text-white' : 'bg-black text-white hover:bg-blue-600'}`}>
-                  <User className="w-4 h-4 lg:w-5 lg:h-5 xl:w-7 xl:h-7 2xl:w-9 2xl:h-9 transition-all duration-300" />
-                </Link>
+                {user ? (
+                  <>
+                    <div className="flex flex-col items-end">
+                      <Link to="/profile" className={`whitespace-nowrap text-xs sm:text-sm lg:text-sm xl:text-xl 2xl:text-2xl leading-tight transition-colors ${isDarkMode ? 'text-white hover:text-orange-400' : 'text-black hover:text-blue-600'}`}>
+                        Hi {getUserNickname()}!
+                      </Link>
+                      <button onClick={logout} className="whitespace-nowrap text-[8px] sm:text-[10px] lg:text-[10px] xl:text-xs 2xl:text-base uppercase font-sans font-bold bg-red-600 hover:bg-red-700 text-white px-1.5 lg:px-2.5 xl:px-4 2xl:px-6 py-0.5 lg:py-1 xl:py-1.5 2xl:py-2 rounded lg:rounded-md transition-all duration-300 mt-0.5 lg:mt-1 shadow-sm cursor-pointer">
+                        Wyloguj
+                      </button>
+                    </div>
+                    {user.avatarUrl ? (
+                      <Link to="/profile" className={`w-8 h-8 lg:w-10 lg:h-10 xl:w-14 xl:h-14 2xl:w-18 2xl:h-18 rounded-full hover:scale-110 transition-all duration-300 shadow-md flex justify-center items-center overflow-hidden border-2 ${isDarkMode ? 'border-orange-500' : 'border-blue-600'}`}>
+                        <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                      </Link>
+                    ) : (
+                      <Link to="/profile" className={`p-1 sm:p-1.5 lg:p-2 xl:p-2.5 2xl:p-4 rounded-full hover:scale-110 transition-all duration-300 shadow-md flex justify-center items-center ${isDarkMode ? 'bg-white text-black hover:bg-orange-400 hover:text-white' : 'bg-black text-white hover:bg-blue-600'}`}>
+                        <User className="w-4 h-4 lg:w-5 lg:h-5 xl:w-7 xl:h-7 2xl:w-9 2xl:h-9 transition-all duration-300" />
+                      </Link>
+                    )}
+                  </>
+                ) : (
+                  <Link to="/login" className={`whitespace-nowrap font-bold text-xs lg:text-base xl:text-lg 2xl:text-2xl px-2 lg:px-4 xl:px-6 py-1 lg:py-2 rounded-lg transition-colors ${isDarkMode ? 'text-white hover:text-orange-400' : 'text-black hover:text-blue-600'}`}>
+                    Zaloguj / Rejestracja
+                  </Link>
+                )}
               </div>
 
               <button
@@ -104,19 +135,39 @@ function App() {
           </nav>
 
           <div className={`lg:hidden absolute top-full mt-4 left-0 right-0 backdrop-blur-xl border rounded-2xl shadow-2xl dark:shadow-white/10 p-4 flex flex-col space-y-3 z-50 transition-all duration-300 origin-top ${isMobileMenuOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'} ${isDarkMode ? 'bg-[#262626]/95 border-white/10' : 'bg-white/90 border-white/50'}`}>
+
             <div className={`flex items-center justify-between p-4 rounded-xl border ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
-              <div className="flex items-center space-x-3">
-                <Link to="/profile" onClick={closeMenu} className={`p-2 rounded-full shadow-md ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                  <User className="w-5 h-5" />
-                </Link>
-                <Link to="/profile" onClick={closeMenu} className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>Hi User!</Link>
-              </div>
-              <Link to="/login" onClick={closeMenu} className="text-xs uppercase font-sans font-bold bg-red-600 text-white px-3 py-2 rounded-lg shadow-sm">Wyloguj</Link>
+              {user ? (
+                <>
+                  <div className="flex items-center space-x-3">
+                    {user.avatarUrl ? (
+                      <Link to="/profile" onClick={closeMenu} className={`w-10 h-10 rounded-full shadow-md overflow-hidden border-2 flex justify-center items-center ${isDarkMode ? 'border-orange-500' : 'border-blue-600'}`}>
+                        <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                      </Link>
+                    ) : (
+                      <Link to="/profile" onClick={closeMenu} className={`p-2 rounded-full shadow-md flex justify-center items-center ${isDarkMode ? 'bg-white text-black' : 'bg-white/5'}`}>
+                        <User className="w-5 h-5 border-black text-black dark:text-white" />
+                      </Link>
+                    )}
+                    <Link to="/profile" onClick={closeMenu} className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>Hi {getUserNickname()}!</Link>
+                  </div>
+                  <button onClick={() => { logout(); closeMenu(); }} className="text-xs uppercase font-sans font-bold bg-red-600 text-white px-3 py-2 rounded-lg shadow-sm cursor-pointer">Wyloguj</button>
+                </>
+              ) : (
+                <div className="flex justify-center w-full">
+                  <Link to="/login" onClick={closeMenu} className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>Zaloguj / Rejestracja</Link>
+                </div>
+              )}
             </div>
 
-            <Link onClick={closeMenu} to="/plan" className={`text-center py-3 rounded-xl shadow-sm dark:shadow-white/10 hover:scale-[1.02] transition-all duration-300 ${isDarkMode ? 'bg-white/10 text-white hover:text-orange-400' : 'bg-white/60 text-black hover:bg-white hover:text-blue-600'}`}>✈️ Zaplanuj podróż</Link>
-            <Link onClick={closeMenu} to="/trips" className={`text-center py-3 rounded-xl shadow-sm dark:shadow-white/10 hover:scale-[1.02] transition-all duration-300 ${isDarkMode ? 'bg-white/10 text-white hover:text-orange-400' : 'bg-white/60 text-black hover:bg-white hover:text-blue-600'}`}>🧳 Moje podróże</Link>
-            <Link onClick={closeMenu} to="/map" className={`text-center py-3 rounded-xl shadow-sm dark:shadow-white/10 hover:scale-[1.02] transition-all duration-300 ${isDarkMode ? 'bg-white/10 text-white hover:text-orange-400' : 'bg-white/60 text-black hover:bg-white hover:text-blue-600'}`}>🌍 Mapa świata</Link>
+            {user && (
+              <>
+                <Link onClick={closeMenu} to="/plan" className={`text-center py-3 rounded-xl shadow-sm dark:shadow-white/10 hover:scale-[1.02] transition-all duration-300 ${isDarkMode ? 'bg-white/10 text-white hover:text-orange-400' : 'bg-white/60 text-black hover:bg-white hover:text-blue-600'}`}>✈️ Zaplanuj podróż</Link>
+                <Link onClick={closeMenu} to="/trips" className={`text-center py-3 rounded-xl shadow-sm dark:shadow-white/10 hover:scale-[1.02] transition-all duration-300 ${isDarkMode ? 'bg-white/10 text-white hover:text-orange-400' : 'bg-white/60 text-black hover:bg-white hover:text-blue-600'}`}>🧳 Moje podróże</Link>
+                <Link onClick={closeMenu} to="/map" className={`text-center py-3 rounded-xl shadow-sm dark:shadow-white/10 hover:scale-[1.02] transition-all duration-300 ${isDarkMode ? 'bg-white/10 text-white hover:text-orange-400' : 'bg-white/60 text-black hover:bg-white hover:text-blue-600'}`}>🌍 Mapa świata</Link>
+              </>
+            )}
+
             <hr className={`my-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`} />
 
             <button onClick={() => { setIsDarkMode(!isDarkMode); closeMenu(); }} className={`flex justify-center items-center text-center py-3 rounded-xl shadow-sm dark:shadow-white/10 hover:scale-[1.02] transition-all duration-300 ${isDarkMode ? 'bg-white text-black hover:bg-gray-200' : 'bg-gray-800 text-white hover:bg-black'}`}>
@@ -130,7 +181,7 @@ function App() {
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
           <Route path="/plan" element={<PlanTrip />} />
-          <Route path="/trip-result" element={<TripResult />} />
+          <Route path="/trip-result/:id" element={<TripResult />} />
           <Route path="/trips" element={<MyTrips />} />
           <Route path="/map" element={<WorldMap />} />
           <Route path="/profile" element={<Profile />} />
