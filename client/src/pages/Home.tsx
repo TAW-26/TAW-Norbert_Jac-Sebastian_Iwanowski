@@ -233,7 +233,7 @@ const Home = () => {
 
                         <div>
                             <Link
-                                to="/profile"
+                                to="/login"
                                 className="inline-block w-full sm:w-auto text-center bg-[#6584e0] dark:bg-orange-500 hover:bg-blue-600 dark:hover:bg-orange-600 text-white font-bold py-5 lg:py-8 px-12 lg:px-24 text-xl lg:text-4xl rounded-2xl transition-all shadow-xl dark:shadow-white/20 duration-300"
                             >
                                 Zarejestruj się za darmo
@@ -243,9 +243,6 @@ const Home = () => {
                 </RevealOnScroll>
             </section>
 
-            {/* ========================================== */}
-            {/* STOPKA (Footer)                              */}
-            {/* ========================================== */}
             <footer className="mx-4 sm:mx-8 mt-16 sm:mt-24 pt-12 pb-6 px-6 sm:px-12 lg:px-24 bg-gray-200/80 dark:bg-[#262626]/95 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_30px_rgba(255,255,255,0.05)] border border-white/30 dark:border-white/10 border-b-0 rounded-t-3xl lg:rounded-t-[3rem] text-black dark:text-white z-10 relative transition-colors duration-500">
                 <div className="max-w-[1400px] mx-auto w-full">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-8 mb-12 text-center md:text-left">

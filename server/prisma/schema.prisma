@@ -7,17 +7,70 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  trips    Trip[]
+  id          Int             @id @default(autoincrement())
+  email       String          @unique
+  password    String
+  nickname    String          @unique
+  dateOfBirth DateTime
+  avatarUrl   String?
+  createdAt   DateTime        @default(now())
+  
+  // Relacje
+  trips       Trip[]
+  preferences UserPreference?
+
+  // Dodaj to wewnątrz model User:
+  pace        String?   @default("-")
+  interests   String?   @default("-")
+  diet        String?   @default("-")
+  transport   String?   @default("-")
+}
+
+model UserPreference {
+  id                 Int    @id @default(autoincrement())
+  userId             Int    @unique
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  favoriteCategories String?
 }
 
 model Trip {
   id          Int      @id @default(autoincrement())
   destination String
+  countryCode String?
+  latitude    Float?
+  longitude   Float?
   startDate   DateTime
   endDate     DateTime
+  budgetLevel String?
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
   userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relacje
+  days        Day[]
+}
+
+model Day {
+  id         Int        @id @default(autoincrement())
+  tripId     Int
+  trip       Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  dayNumber  Int
+
+  // Relacje
+  activities Activity[]
+}
+
+model Activity {
+  id          Int     @id @default(autoincrement())
+  dayId       Int
+  day         Day     @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  startTime   String?
+  location    String?
 }
