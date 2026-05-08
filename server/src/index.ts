@@ -60,6 +60,8 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
+
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
 
@@ -412,6 +414,10 @@ app.post('/api/trips/save-generated', authenticateToken, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Serwer wystartował na http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Serwer wystartował na http://localhost:${PORT}`);
+  });
+}
+
+export default app;
