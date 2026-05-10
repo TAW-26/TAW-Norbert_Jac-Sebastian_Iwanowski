@@ -1,14 +1,14 @@
-import express from 'express';
-import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import cors from 'cors';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import express from "express";
+import "dotenv/config";
+import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import cors from "cors";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -17,61 +17,82 @@ const prisma = new PrismaClient({ adapter });
 const app = express();
 const PORT = 5000;
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
 
-app.get('/', (req, res) => {
-  res.send('Backend działa poprawnie! Baza podłączona!');
+app.get("/", (req, res) => {
+  res.send("Backend działa poprawnie! Baza podłączona!");
 });
 
-app.post('/api/auth/register', async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   try {
     const { email, password, nickname, dateOfBirth, avatarUrl } = req.body;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) return res.status(400).json({ error: "Użytkownik o tym adresie email już istnieje." });
+    if (existingUser)
+      return res
+        .status(400)
+        .json({ error: "Użytkownik o tym adresie email już istnieje." });
 
-    const existingNickname = await prisma.user.findUnique({ where: { nickname } });
-    if (existingNickname) return res.status(400).json({ error: "Ten nick jest już zajęty. Wybierz inny." });
+    const existingNickname = await prisma.user.findUnique({
+      where: { nickname },
+    });
+    if (existingNickname)
+      return res
+        .status(400)
+        .json({ error: "Ten nick jest już zajęty. Wybierz inny." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
       data: {
-        email, password: hashedPassword, nickname,
+        email,
+        password: hashedPassword,
+        nickname,
         dateOfBirth: new Date(dateOfBirth),
-        avatarUrl: avatarUrl || null
+        avatarUrl: avatarUrl || null,
       },
     });
 
-    res.status(201).json({ id: newUser.id, email: newUser.email, nickname: newUser.nickname });
+    res
+      .status(201)
+      .json({
+        id: newUser.id,
+        email: newUser.email,
+        nickname: newUser.nickname,
+      });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Błąd serwera podczas rejestracji" });
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
+    if (!email || !password)
+      return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
+    if (!user)
+      return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
+    if (!isPasswordValid)
+      return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET as string,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" },
     );
 
     res.status(200).json({ token });
@@ -81,36 +102,58 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-const authenticateToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+const authenticateToken = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction,
+) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) return res.status(401).json({ error: "Brak dostępu. Musisz być zalogowany!" });
+  if (!token)
+    return res
+      .status(401)
+      .json({ error: "Brak dostępu. Musisz być zalogowany!" });
 
   jwt.verify(token, process.env.JWT_SECRET as string, (err, user) => {
-    if (err) return res.status(403).json({ error: "Token jest nieważny lub wygasł." });
+    if (err)
+      return res.status(403).json({ error: "Token jest nieważny lub wygasł." });
     (req as any).user = user;
     next();
   });
 };
 
-app.get('/api/users/me', authenticateToken, async (req, res) => {
+app.get("/api/users/me", authenticateToken, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, nickname: true, dateOfBirth: true, avatarUrl: true, createdAt: true, pace: true, interests: true, diet: true, transport: true }
+      select: {
+        id: true,
+        email: true,
+        nickname: true,
+        dateOfBirth: true,
+        avatarUrl: true,
+        createdAt: true,
+        pace: true,
+        interests: true,
+        diet: true,
+        transport: true,
+      },
     });
 
-    if (!user) return res.status(404).json({ error: "Nie znaleziono użytkownika." });
+    if (!user)
+      return res.status(404).json({ error: "Nie znaleziono użytkownika." });
     res.status(200).json({ message: "Autoryzacja pomyślna", user });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Błąd serwera podczas pobierania danych użytkownika." });
+    res
+      .status(500)
+      .json({ error: "Błąd serwera podczas pobierania danych użytkownika." });
   }
 });
 
-app.put('/api/users/avatar', authenticateToken, async (req, res) => {
+app.put("/api/users/avatar", authenticateToken, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { avatarUrl } = req.body;
@@ -122,13 +165,13 @@ app.put('/api/users/avatar', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/users/preferences', authenticateToken, async (req, res) => {
+app.put("/api/users/preferences", authenticateToken, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { pace, interests, diet, transport } = req.body;
     await prisma.user.update({
       where: { id: userId },
-      data: { pace, interests, diet, transport }
+      data: { pace, interests, diet, transport },
     });
     res.status(200).json({ message: "Preferencje zaktualizowane." });
   } catch (error) {
@@ -137,12 +180,12 @@ app.put('/api/users/preferences', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/users/me', authenticateToken, async (req, res) => {
+app.delete("/api/users/me", authenticateToken, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
 
     await prisma.user.delete({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     res.status(200).json({ message: "Konto zostało usunięte." });
@@ -156,28 +199,31 @@ const tripService = {
   async getUserTrips(userId: number) {
     return await prisma.trip.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" },
     });
   },
 
   async deleteTrip(tripId: number, userId: number) {
     const trip = await prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip || trip.userId !== userId) throw new Error("Nie znaleziono wycieczki.");
+    if (!trip || trip.userId !== userId)
+      throw new Error("Nie znaleziono wycieczki.");
     return await prisma.trip.delete({ where: { id: tripId } });
-  }
+  },
 };
 
-app.get('/api/trips', authenticateToken, async (req, res) => {
+app.get("/api/trips", authenticateToken, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const trips = await tripService.getUserTrips(userId);
     res.status(200).json(trips);
   } catch (error: any) {
-    res.status(500).json({ error: "Wystąpił błąd podczas pobierania wycieczek." });
+    res
+      .status(500)
+      .json({ error: "Wystąpił błąd podczas pobierania wycieczek." });
   }
 });
 
-app.get('/api/trips/:id', authenticateToken, async (req, res) => {
+app.get("/api/trips/:id", authenticateToken, async (req, res) => {
   try {
     const tripId = parseInt(req.params.id as string);
     const userId = (req as any).user.userId;
@@ -186,14 +232,14 @@ app.get('/api/trips/:id', authenticateToken, async (req, res) => {
       where: { id: tripId },
       include: {
         days: {
-          orderBy: { dayNumber: 'asc' },
+          orderBy: { dayNumber: "asc" },
           include: {
             activities: {
-              orderBy: { startTime: 'asc' }
-            }
-          }
-        }
-      }
+              orderBy: { startTime: "asc" },
+            },
+          },
+        },
+      },
     });
 
     if (!trip || trip.userId !== userId) {
@@ -207,7 +253,7 @@ app.get('/api/trips/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/trips/:id', authenticateToken, async (req, res) => {
+app.delete("/api/trips/:id", authenticateToken, async (req, res) => {
   try {
     const tripId = parseInt(req.params.id as string);
     const userId = (req as any).user.userId;
@@ -218,15 +264,19 @@ app.delete('/api/trips/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/trips/:id', authenticateToken, async (req, res) => {
+app.put("/api/trips/:id", authenticateToken, async (req, res) => {
   try {
     const tripId = parseInt(req.params.id as string);
     const userId = (req as any).user.userId;
     const tripData = req.body;
 
-    const existingTrip = await prisma.trip.findUnique({ where: { id: tripId } });
+    const existingTrip = await prisma.trip.findUnique({
+      where: { id: tripId },
+    });
     if (!existingTrip || existingTrip.userId !== userId) {
-      return res.status(403).json({ error: "Brak dostępu lub wycieczka nie istnieje." });
+      return res
+        .status(403)
+        .json({ error: "Brak dostępu lub wycieczka nie istnieje." });
     }
 
     await prisma.trip.update({
@@ -239,11 +289,11 @@ app.put('/api/trips/:id', authenticateToken, async (req, res) => {
         startDate: new Date(tripData.startDate),
         endDate: new Date(tripData.endDate),
         budgetLevel: tripData.budgetLevel,
-      }
+      },
     });
 
     await prisma.day.deleteMany({
-      where: { tripId: tripId }
+      where: { tripId: tripId },
     });
 
     for (const day of tripData.days) {
@@ -256,10 +306,10 @@ app.put('/api/trips/:id', authenticateToken, async (req, res) => {
               title: act.title,
               description: act.description,
               startTime: act.startTime,
-              location: act.location
-            }))
-          }
-        }
+              location: act.location,
+            })),
+          },
+        },
       });
     }
 
@@ -270,19 +320,23 @@ app.put('/api/trips/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/trips/:id/complete', authenticateToken, async (req, res) => {
+app.put("/api/trips/:id/complete", authenticateToken, async (req, res) => {
   try {
     const tripId = parseInt(req.params.id as string);
     const userId = (req as any).user.userId;
 
-    const existingTrip = await prisma.trip.findUnique({ where: { id: tripId } });
+    const existingTrip = await prisma.trip.findUnique({
+      where: { id: tripId },
+    });
     if (!existingTrip || existingTrip.userId !== userId) {
-      return res.status(403).json({ error: "Brak dostępu lub wycieczka nie istnieje." });
+      return res
+        .status(403)
+        .json({ error: "Brak dostępu lub wycieczka nie istnieje." });
     }
 
     await prisma.trip.update({
       where: { id: tripId },
-      data: { isCompleted: true }
+      data: { isCompleted: true },
     });
 
     res.status(200).json({ message: "Podróż oznaczona jako zrealizowana!" });
@@ -292,12 +346,24 @@ app.put('/api/trips/:id/complete', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/trips/generate', authenticateToken, async (req, res) => {
+app.post("/api/trips/generate", authenticateToken, async (req, res) => {
   try {
-    const { destination, startDate, endDate, budgetLevel, preferences, userPace, userInterests, userDiet, userTransport } = req.body;
+    const {
+      destination,
+      startDate,
+      endDate,
+      budgetLevel,
+      preferences,
+      userPace,
+      userInterests,
+      userDiet,
+      userTransport,
+    } = req.body;
 
-    if (!destination || !startDate || !endDate) return res.status(400).json({ error: "Brakuje danych." });
-    if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "Błąd klucza AI." });
+    if (!destination || !startDate || !endDate)
+      return res.status(400).json({ error: "Brakuje danych." });
+    if (!process.env.GEMINI_API_KEY)
+      return res.status(500).json({ error: "Błąd klucza AI." });
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -313,13 +379,13 @@ app.post('/api/trips/generate', authenticateToken, async (req, res) => {
       - Data rozpoczęcia: ${startDate}
       - Liczba dni do zaplanowania: ${calculatedDays}
       - Budżet: ${budgetLevel}
-      - Zainteresowania (kliknięte teraz): ${preferences && preferences.length > 0 ? preferences.join(', ') : 'Brak specjalnych'}
+      - Zainteresowania (kliknięte teraz): ${preferences && preferences.length > 0 ? preferences.join(", ") : "Brak specjalnych"}
       
       PREFERENCJE Z PROFILU UŻYTKOWNIKA (Musisz bezwzględnie dopasować do nich plan!):
-      - Tempo zwiedzania: ${userPace && userPace !== '-' ? userPace : 'Zbalansowane'}
-      - Ulubione pasje: ${userInterests && userInterests !== '-' ? userInterests : 'Najpopularniejsze atrakcje'}
-      - Wymagania dietetyczne: ${userDiet && userDiet !== '-' ? userDiet : 'Brak ograniczeń'}
-      - Preferowany środek transportu na miejscu: ${userTransport && userTransport !== '-' ? userTransport : 'Dowolny'}
+      - Tempo zwiedzania: ${userPace && userPace !== "-" ? userPace : "Zbalansowane"}
+      - Ulubione pasje: ${userInterests && userInterests !== "-" ? userInterests : "Najpopularniejsze atrakcje"}
+      - Wymagania dietetyczne: ${userDiet && userDiet !== "-" ? userDiet : "Brak ograniczeń"}
+      - Preferowany środek transportu na miejscu: ${userTransport && userTransport !== "-" ? userTransport : "Dowolny"}
       
       BARDZO WAŻNE:
       1. Weź pod uwagę datę rozpoczęcia (${startDate}) przy planowaniu (np. pora roku).
@@ -353,8 +419,10 @@ app.post('/api/trips/generate', authenticateToken, async (req, res) => {
     const result = await model.generateContent(prompt);
     let aiResponseText = result.response.text().trim();
 
-    if (aiResponseText.startsWith('```json')) aiResponseText = aiResponseText.slice(7);
-    if (aiResponseText.endsWith('```')) aiResponseText = aiResponseText.slice(0, -3);
+    if (aiResponseText.startsWith("```json"))
+      aiResponseText = aiResponseText.slice(7);
+    if (aiResponseText.endsWith("```"))
+      aiResponseText = aiResponseText.slice(0, -3);
 
     const generatedData = JSON.parse(aiResponseText);
 
@@ -366,16 +434,15 @@ app.post('/api/trips/generate', authenticateToken, async (req, res) => {
       startDate: start.toISOString(),
       endDate: end.toISOString(),
       budgetLevel: generatedData.budgetLevel,
-      days: generatedData.days
+      days: generatedData.days,
     });
-
   } catch (error) {
     console.error("Błąd generatora AI:", error);
     res.status(500).json({ error: "Nie udało się wygenerować podróży." });
   }
 });
 
-app.post('/api/trips/save-generated', authenticateToken, async (req, res) => {
+app.post("/api/trips/save-generated", authenticateToken, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const tripData = req.body;
@@ -398,23 +465,25 @@ app.post('/api/trips/save-generated', authenticateToken, async (req, res) => {
                 title: act.title,
                 description: act.description,
                 startTime: act.startTime,
-                location: act.location
-              }))
-            }
-          }))
-        }
+                location: act.location,
+              })),
+            },
+          })),
+        },
       },
-      select: { id: true }
+      select: { id: true },
     });
 
-    res.status(201).json({ id: savedTrip.id, message: "Pomyślnie zapisano podróż!" });
+    res
+      .status(201)
+      .json({ id: savedTrip.id, message: "Pomyślnie zapisano podróż!" });
   } catch (error) {
     console.error("Błąd podczas zapisu podróży:", error);
     res.status(500).json({ error: "Nie udało się zapisać podróży w bazie." });
   }
 });
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {
     console.log(`Serwer wystartował na http://localhost:${PORT}`);
   });
