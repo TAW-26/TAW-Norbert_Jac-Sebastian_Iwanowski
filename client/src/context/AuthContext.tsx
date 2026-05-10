@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const response = await api.get('/users/me');
             setUser(response.data.user);
         } catch (error) {
-            console.error("Sesja wygasła lub błąd tokena:", error);
+            console.error('Sesja wygasła lub błąd tokena:', error);
             localStorage.removeItem('token');
             setUser(null);
         } finally {
@@ -63,13 +63,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const updateUser = (newData: Partial<User>) => {
-        setUser(prevUser => prevUser ? { ...prevUser, ...newData } : null);
+        setUser((prevUser) => (prevUser ? { ...prevUser, ...newData } : null));
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
-            {children}
-        </AuthContext.Provider>
+        <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>{children}</AuthContext.Provider>
     );
 };
 
