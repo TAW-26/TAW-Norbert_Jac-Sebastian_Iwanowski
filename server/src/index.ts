@@ -7,6 +7,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { register, api_errors_total } from "./metrics/index";
+import { metricsMiddleware } from "./middleware/metricsMiddleware";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -27,6 +29,13 @@ app.use(
 
 app.use(express.json({ limit: "10mb" }));
 
+app.use(metricsMiddleware);
+
+app.get('/metrics', async (_req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
 app.get("/", (req, res) => {
   res.send("Backend działa poprawnie! Baza podłączona!");
 });
@@ -36,18 +45,22 @@ app.post("/api/auth/register", async (req, res) => {
     const { email, password, nickname, dateOfBirth, avatarUrl } = req.body;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser)
+    if (existingUser) {
+      api_errors_total.inc({ type: "bad_request" });
       return res
         .status(400)
         .json({ error: "Użytkownik o tym adresie email już istnieje." });
+    }
 
     const existingNickname = await prisma.user.findUnique({
       where: { nickname },
     });
-    if (existingNickname)
+    if (existingNickname) {
+      api_errors_total.inc({ type: "bad_request" });
       return res
         .status(400)
         .json({ error: "Ten nick jest już zajęty. Wybierz inny." });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -78,21 +91,27 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password)
-      return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
+    if (!email || !password) {
+      api_errors_total.inc({ type: "bad_request" });
+      return res.status(400).json({ error: "Nieprawidłowy email lub hasło." });
+    }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user)
-      return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
+    if (!user) {
+      api_errors_total.inc({ type: "not_found" });
+      return res.status(404).json({ error: "Nieprawidłowy email lub hasło." });
+    }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid)
-      return res.status(401).json({ error: "Nieprawidłowy email lub hasło." });
+    if (!isPasswordValid) {
+      api_errors_total.inc({ type: "bad_request" });
+      return res.status(400).json({ error: "Nieprawidłowy email lub hasło." });
+    }
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET as string,
-      { expiresIn: "24h" },
+      { expiresIn: "24h" }
     );
 
     res.status(200).json({ token });
@@ -142,8 +161,10 @@ app.get("/api/users/me", authenticateToken, async (req, res) => {
       },
     });
 
-    if (!user)
+    if (!user) {
+      api_errors_total.inc({ type: "not_found" });
       return res.status(404).json({ error: "Nie znaleziono użytkownika." });
+    }
     res.status(200).json({ message: "Autoryzacja pomyślna", user });
   } catch (error) {
     console.error(error);
@@ -243,6 +264,7 @@ app.get("/api/trips/:id", authenticateToken, async (req, res) => {
     });
 
     if (!trip || trip.userId !== userId) {
+      api_errors_total.inc({ type: "not_found" });
       return res.status(404).json({ error: "Nie znaleziono wycieczki." });
     }
 
@@ -260,6 +282,7 @@ app.delete("/api/trips/:id", authenticateToken, async (req, res) => {
     await tripService.deleteTrip(tripId, userId);
     res.status(200).json({ message: "Wycieczka została pomyślnie usunięta." });
   } catch (error: any) {
+    api_errors_total.inc({ type: "not_found" });
     res.status(404).json({ error: error.message });
   }
 });
@@ -360,8 +383,10 @@ app.post("/api/trips/generate", authenticateToken, async (req, res) => {
       userTransport,
     } = req.body;
 
-    if (!destination || !startDate || !endDate)
+    if (!destination || !startDate || !endDate) {
+      api_errors_total.inc({ type: "bad_request" });
       return res.status(400).json({ error: "Brakuje danych." });
+    }
     if (!process.env.GEMINI_API_KEY)
       return res.status(500).json({ error: "Błąd klucza AI." });
 
